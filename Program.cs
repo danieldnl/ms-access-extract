@@ -4,6 +4,9 @@ using MsAccessExtract.Helpers;
 
 Console.OutputEncoding = Encoding.UTF8;
 
+// Detect if running interactively (double-click vs terminal)
+bool isInteractive = !Console.IsInputRedirected && Environment.UserInteractive;
+
 // Banner
 Console.ForegroundColor = ConsoleColor.Cyan;
 Console.WriteLine();
@@ -37,6 +40,7 @@ try
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"  File not found: {arg}");
             Console.ResetColor();
+            WaitForExit(isInteractive);
             return 1;
         }
     }
@@ -56,6 +60,7 @@ try
             Console.WriteLine();
             Console.WriteLine("  Place this executable in the same folder as your .accdb or .mdb file.");
             Console.ResetColor();
+            WaitForExit(isInteractive);
             return 1;
         }
     }
@@ -65,6 +70,7 @@ try
     using var extractor = new AccessExtractor(logger);
     extractor.Extract(dbPath);
 
+    WaitForExit(isInteractive);
     return logger.HasErrors ? 2 : 0;
 }
 catch (InvalidOperationException ex)
@@ -73,6 +79,7 @@ catch (InvalidOperationException ex)
     Console.WriteLine();
     Console.WriteLine($"  ERROR: {ex.Message}");
     Console.ResetColor();
+    WaitForExit(isInteractive);
     return 1;
 }
 catch (Exception ex)
@@ -84,6 +91,7 @@ catch (Exception ex)
     Console.ForegroundColor = ConsoleColor.DarkGray;
     Console.WriteLine($"\n  {ex.StackTrace}");
     Console.ResetColor();
+    WaitForExit(isInteractive);
     return 1;
 }
 
@@ -120,4 +128,15 @@ static string? FindAccessDatabase(string directory)
         return null;
 
     return accdbFiles.Length > 0 ? accdbFiles[0] : mdbFiles[0];
+}
+
+static void WaitForExit(bool isInteractive)
+{
+    if (!isInteractive) return;
+    Console.WriteLine();
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    Console.Write("  Press any key to exit...");
+    Console.ResetColor();
+    Console.ReadKey(intercept: true);
+    Console.WriteLine();
 }

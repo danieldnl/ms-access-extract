@@ -28,7 +28,7 @@ internal sealed class QueryExtractor
         try
         {
             // SaveAsText export
-            allQueries = accessApp.CurrentProject.AllQueries;
+            allQueries = accessApp.CurrentData.AllQueries;
             int count = (int)allQueries.Count;
 
             if (count == 0)

@@ -28,13 +28,16 @@ internal sealed class AccessExtractor : IDisposable
         _logger.Info($"Output folder: {outputRoot}");
         _logger.StartTimer();
 
-        // Clean and recreate output folder
-        if (Directory.Exists(outputRoot))
+        // Clean output folder but preserve .git
+        if (!Directory.Exists(outputRoot))
+        {
+            Directory.CreateDirectory(outputRoot);
+        }
+        else
         {
             _logger.Info("Cleaning previous export...");
-            Directory.Delete(outputRoot, recursive: true);
+            CleanOutputDirectory(outputRoot, _logger);
         }
-        Directory.CreateDirectory(outputRoot);
 
         // Start Access via COM
         _logger.Info("Starting Microsoft Access...");
@@ -151,6 +154,54 @@ internal sealed class AccessExtractor : IDisposable
             {
                 Directory.Delete(dir);
             }
+        }
+    }
+
+    /// <summary>
+    /// Cleans the directory for a new export, but skips the .git folder to preserve version history.
+    /// Safely clears read-only attributes on files being deleted.
+    /// </summary>
+    private static void CleanOutputDirectory(string path, ConsoleLogger logger)
+    {
+        var dirInfo = new DirectoryInfo(path);
+
+        foreach (var file in dirInfo.GetFiles())
+        {
+            if (file.Name.StartsWith(".git", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.Info($"Skipping git file: {file.Name}");
+                continue;
+            }
+
+            if (file.Attributes.HasFlag(FileAttributes.ReadOnly))
+                file.Attributes &= ~FileAttributes.ReadOnly;
+            
+            file.Delete();
+        }
+
+        foreach (var dir in dirInfo.GetDirectories())
+        {
+            // Crucial: do not delete the .git folder!
+            if (dir.Name.Equals(".git", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.Info("Preserving .git directory...");
+                continue;
+            }
+
+            // Recursively clear read-only attributes for the folder to delete
+            foreach (var f in dir.GetFiles("*", SearchOption.AllDirectories))
+            {
+                if (f.Attributes.HasFlag(FileAttributes.ReadOnly))
+                    f.Attributes &= ~FileAttributes.ReadOnly;
+            }
+
+            foreach (var d in dir.GetDirectories("*", SearchOption.AllDirectories))
+            {
+                if (d.Attributes.HasFlag(FileAttributes.ReadOnly))
+                    d.Attributes &= ~FileAttributes.ReadOnly;
+            }
+
+            dir.Delete(recursive: true);
         }
     }
 
