@@ -1,0 +1,42 @@
+# Build outputs
+bin/
+obj/
+publish/
+
+# IDE / Editor
+.vs/
+.vscode/
+*.user
+*.suo
+*.cache
+*.DotSettings.user
+*.sln.docstates
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# .NET
+*.nupkg
+*.snupkg
+project.lock.json
+*.nuget.props
+*.nuget.targets
+
+# MS Access databases (don't version the binary — version the extracted source)
+*.accdb
+*.mdb
+*.laccdb
+*.ldb
+*.mdw
+*.accde
+*.mde
+
+# Exported source (optional — uncomment if you version the _src separately)
+# *_src/
+
+# Agent / AI config
+.agent/
+implementation_plan.md
